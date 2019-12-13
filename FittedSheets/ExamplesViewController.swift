@@ -74,6 +74,7 @@ class ExamplesViewController: UIViewController {
             sheetController.dismissable = false
             sheetController.animatePresent = false
             sheetController.touchDelegate = self.view
+            sheetController.fullScreenTopInset = 40
             
             sheetController.willDismiss = { _ in
                 print("Will dismiss \(name)")
