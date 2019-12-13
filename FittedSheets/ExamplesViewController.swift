@@ -60,12 +60,20 @@ class ExamplesViewController: UIViewController {
                 controller = UINavigationController(rootViewController: controller)
             }
             
+            if let existing = self.presentedViewController {
+                existing.dismiss(animated: false, completion: nil)
+            }
+            
             let sheetController = SheetViewController(controller: controller, sizes: sizes)
             sheetController.adjustForBottomSafeArea = self.adjustForBottomSafeAreaSwitch.isOn
             sheetController.blurBottomSafeArea = self.blurBottomSafeAreaSwitch.isOn
             sheetController.dismissOnBackgroundTap = self.dismissOnBackgroundTapSwitch.isOn
             sheetController.extendBackgroundBehindHandle = self.extendBackgroundBehindHandleSwitch.isOn
             sheetController.topCornersRadius = self.roundedCornersSwitch.isOn ? 15 : 0
+            sheetController.overlayColor = UIColor.clear
+            sheetController.dismissable = false
+            sheetController.animatePresent = false
+            sheetController.touchDelegate = self.view
             
             sheetController.willDismiss = { _ in
                 print("Will dismiss \(name)")

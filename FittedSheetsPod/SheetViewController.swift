@@ -31,6 +31,8 @@ public class SheetViewController: UIViewController {
     /// If true, sheet may be dismissed by panning down
     public var dismissOnPan: Bool = true
     
+    public var animatePresent: Bool = true
+    
     /// If true, sheet's dismiss view will be generated, otherwise sheet remains fixed and will need to be dismissed programatically
     public var dismissable: Bool = true {
         didSet {
@@ -71,6 +73,14 @@ public class SheetViewController: UIViewController {
         }
     }
     
+    public var touchDelegate: UIView? {
+        didSet {
+            guard isViewLoaded else { return }
+            if let view = self.view as? PassThroughView {
+                view.touchDelegate = touchDelegate
+            }
+        }
+    }
     public var willDismiss: ((SheetViewController) -> Void)?
     public var didDismiss: ((SheetViewController) -> Void)?
     
@@ -122,6 +132,12 @@ public class SheetViewController: UIViewController {
     public override func viewDidLoad() {
         super.viewDidLoad()
         
+        if let touchDelegate = touchDelegate {
+            let view = PassThroughView()
+            view.touchDelegate = touchDelegate
+            self.view = view
+        }
+        
         if (self.childViewController == nil) {
             fatalError("SheetViewController requires a child view controller")
         }
@@ -131,12 +147,12 @@ public class SheetViewController: UIViewController {
         
         if(dismissable){
             self.setUpDismissView()
-            
-            let panGestureRecognizer = InitialTouchPanGestureRecognizer(target: self, action: #selector(panned(_:)))
-            self.view.addGestureRecognizer(panGestureRecognizer)
-            panGestureRecognizer.delegate = self
-            self.panGestureRecognizer = panGestureRecognizer
         }
+            
+        let panGestureRecognizer = InitialTouchPanGestureRecognizer(target: self, action: #selector(panned(_:)))
+        self.view.addGestureRecognizer(panGestureRecognizer)
+        panGestureRecognizer.delegate = self
+        self.panGestureRecognizer = panGestureRecognizer
       
         self.setUpPullBarView()
         self.setUpChildViewController()
@@ -147,12 +163,18 @@ public class SheetViewController: UIViewController {
     
     public override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        UIView.animate(withDuration: 0.3, delay: 0, options: [.curveEaseOut], animations: { [weak self] in
-            guard let self = self else { return }
-            self.view.backgroundColor = self.overlayColor
-            self.containerView.transform = CGAffineTransform.identity
-            self.actualContainerSize = .fixed(self.containerView.frame.height)
-        }, completion: nil)
+        if animatePresent {
+            UIView.animate(withDuration: 0.3, delay: 0, options: [.curveEaseOut], animations: { [weak self] in
+                guard let self = self else { return }
+                self.view.backgroundColor = self.overlayColor
+                self.containerView.transform = CGAffineTransform.identity
+                self.actualContainerSize = .fixed(self.containerView.frame.height)
+            }, completion: nil)
+        } else {
+            view.backgroundColor = self.overlayColor
+            containerView.transform = CGAffineTransform.identity
+            actualContainerSize = .fixed(self.containerView.frame.height)
+        }
     }
     
     /// Change the sizes the sheet should try to pin to
@@ -450,7 +472,9 @@ public class SheetViewController: UIViewController {
     
     /// Handle a scroll view in the child view controller by watching for the offset for the scrollview and taking priority when at the top (so pulling up/down can grow/shrink the sheet instead of bouncing the child's scroll view)
     public func handleScrollView(_ scrollView: UIScrollView) {
-        scrollView.panGestureRecognizer.require(toFail: panGestureRecognizer)
+        if let panGestureRecognizer = panGestureRecognizer {
+            scrollView.panGestureRecognizer.require(toFail: panGestureRecognizer)
+        }
         self.childScrollView = scrollView
     }
     
@@ -497,4 +521,20 @@ extension SheetViewController: UIGestureRecognizerDelegate {
             return true
         }
     }
+}
+
+class PassThroughView: UIView {
+    weak var touchDelegate: UIView? = nil
+    
+    override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+        guard let view = super.hitTest(point, with: event) else { return nil }
+
+        guard view == self, let point = touchDelegate?.convert(point, from: self) else { return view }
+
+        return touchDelegate?.hitTest(point, with: event)
+    }
+    /*override public func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+        let view = super.hitTest(point, with: event)
+        return view == self ? nil : view
+    }*/
 }
