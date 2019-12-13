@@ -232,7 +232,7 @@ public class SheetViewController: UIViewController {
             self.containerHeightConstraint = subview.height.set(self.height(for: self.containerSize))
             self.containerHeightConstraint.priority = UILayoutPriority(900)
         }
-        self.containerView.layer.masksToBounds = true
+        //self.containerView.layer.masksToBounds = true
         self.containerView.backgroundColor = UIColor.clear
         self.containerView.transform = CGAffineTransform(translationX: 0, y: UIScreen.main.bounds.height)
         
@@ -258,7 +258,7 @@ public class SheetViewController: UIViewController {
             subview.top.align(with: self.pullBarView.al.bottom)
         }
         
-        self.childViewController.view.layer.masksToBounds = true
+        //self.childViewController.view.layer.masksToBounds = true
         
         self.childViewController.didMove(toParent: self)
         
