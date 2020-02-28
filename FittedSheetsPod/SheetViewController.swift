@@ -158,6 +158,7 @@ public class SheetViewController: UIViewController {
       
         self.setUpPullBarView()
         self.setUpChildViewController()
+        self.updatePullBarView()
         self.updateRoundedCorners()
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardShown(_:)), name: UIResponder.keyboardWillChangeFrameNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardDismissed(_:)), name: UIResponder.keyboardWillHideNotification, object: nil)
@@ -288,6 +289,7 @@ public class SheetViewController: UIViewController {
             controllerWithRoundedCorners?.layer.cornerRadius = self.topCornersRadius
             controllerWithoutRoundedCorners?.layer.maskedCorners = []
             controllerWithoutRoundedCorners?.layer.cornerRadius = 0
+            pullBarView.layer.cornerRadius = self.topCornersRadius
         }
     }
     
@@ -315,17 +317,25 @@ public class SheetViewController: UIViewController {
             subview.centerX.alignWithSuperview()
             subview.size.set(handleSize)
         }
-        pullBarView.layer.masksToBounds = true
-        pullBarView.backgroundColor = extendBackgroundBehindHandle ? childViewController.view.backgroundColor : UIColor.clear
-        
-        handleView.layer.cornerRadius = handleSize.height / 2.0
-        handleView.layer.masksToBounds = true
-        handleView.backgroundColor = self.handleColor
-        
+                
         pullBarView.isAccessibilityElement = true
         pullBarView.accessibilityLabel = "Pull bar"
         pullBarView.accessibilityHint = "Tap on this bar to dismiss the modal"
         pullBarView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(dismissTapped)))
+    }
+    
+    private func updatePullBarView() {
+        
+        pullBarView.backgroundColor = extendBackgroundBehindHandle ? childViewController.view.backgroundColor : UIColor.clear
+        if #available(iOS 11.0, *), extendBackgroundBehindHandle {
+            pullBarView.layer.masksToBounds = true
+            pullBarView.layer.cornerRadius = self.topCornersRadius
+            pullBarView.layer.maskedCorners = [.layerMaxXMinYCorner, .layerMinXMinYCorner]
+        }
+        
+        handleView.layer.cornerRadius = handleSize.height / 2.0
+        handleView.layer.masksToBounds = true
+        handleView.backgroundColor = self.handleColor
     }
     
     @objc func dismissTapped() {
