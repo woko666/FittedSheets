@@ -12,7 +12,7 @@ public class SheetViewController: UIViewController {
     // MARK: - Public Properties
     public private(set) var childViewController: UIViewController!
     
-    public let containerView = UIView()
+    public let containerView = OutsideSubViewsHittable()
     /// The view that can be pulled to resize a sheeet. This includes the background. To change the color of the bar, use `handleView` instead
     public let pullBarView = UIView()
     public let handleView = UIView()
@@ -540,6 +540,10 @@ class PassThroughView: UIView {
     
     override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
         guard let view = super.hitTest(point, with: event) else { return nil }
+        
+        if let view = hitTestInner(point, with: event) {
+            return view
+        }
 
         guard view == self, let point = touchDelegate?.convert(point, from: self) else { return view }
 
@@ -549,4 +553,38 @@ class PassThroughView: UIView {
         let view = super.hitTest(point, with: event)
         return view == self ? nil : view
     }*/
+    
+    func hitTestInner(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+
+        if clipsToBounds || isHidden || alpha == 0 {
+            return nil
+        }
+
+        for subview in subviews.reversed() {
+            let subPoint = subview.convert(point, from: self)
+            if let result = subview.hitTest(subPoint, with: event) {
+                return result
+            }
+        }
+
+        return nil
+    }
+}
+
+public class OutsideSubViewsHittable: UIView {
+    override public func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+
+        if clipsToBounds || isHidden || alpha == 0 {
+            return nil
+        }
+
+        for subview in subviews.reversed() {
+            let subPoint = subview.convert(point, from: self)
+            if let result = subview.hitTest(subPoint, with: event) {
+                return result
+            }
+        }
+
+        return nil
+    }
 }
