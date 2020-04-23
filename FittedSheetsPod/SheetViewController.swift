@@ -354,9 +354,14 @@ public class SheetViewController: UIViewController {
     }
     
     override public func dismiss(animated flag: Bool, completion: (() -> Void)? = nil) {
-        self.willDismiss?(self)
+        let isAlert = presentedViewController is UIAlertController
+        if !isAlert {
+            self.willDismiss?(self)
+        }
         super.dismiss(animated: flag) {
-            self.didDismiss?(self)
+            if !isAlert {
+                self.didDismiss?(self)
+            }
             completion?()
         }
     }
